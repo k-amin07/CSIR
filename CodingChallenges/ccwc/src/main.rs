@@ -4,7 +4,8 @@ use std::{fs};
 enum Opts {
     Bytes,
     Lines,
-    Words
+    Words,
+    None
 }
 
 struct Cmd {
@@ -17,7 +18,7 @@ fn get_args() -> Cmd {
     .arg(Arg::new("bytes").short('c').long("bytes").action(ArgAction::SetTrue).required(false))
     .arg(Arg::new("lines").short('l').long("lines").action(ArgAction::SetTrue).required(false))
     .arg(Arg::new("words").short('w').long("words").action(ArgAction::SetTrue).required(false))
-    .arg(Arg::new("filename"))
+    .arg(Arg::new("filename").required(false))
     .get_matches();
 
     let (bytes, lines, words) = (
@@ -26,15 +27,14 @@ fn get_args() -> Cmd {
         matches.get_flag("words")
     );
 
-    if !(bytes || lines || words) {
-        panic!("At least one flag is required. Use --help to see the valid options");
-    }
-    let mut opts:Opts = Opts::Bytes;
+    let mut opts:Opts = Opts::None;
     
     if lines {
         opts = Opts::Lines;
     } else if words {
         opts = Opts::Words;
+    } else if bytes {
+        opts = Opts::Bytes;
     }
 
 
@@ -63,11 +63,15 @@ fn main() {
     let contents = fs::read_to_string(&file_name)
         .expect("Should have been able to read the file");
 
-    let required_count = match opts {
-        Opts::Bytes => count_bytes(&contents),
-        Opts::Words => count_words(&contents),
-        Opts::Lines => count_lines(&contents)
+    match opts {
+        Opts::Bytes => println!("{} {}", count_bytes(&contents), file_name),
+        Opts::Words => println!("{} {}", count_words(&contents), file_name),
+        Opts::Lines => println!("{} {}", count_lines(&contents), file_name),
+        Opts::None  => println!("{} {} {} {}", 
+            count_bytes(&contents), 
+            count_lines(&contents),
+            count_words(&contents), 
+            file_name 
+        )
     };
-
-    println!("{} {}", required_count,file_name);
 }
